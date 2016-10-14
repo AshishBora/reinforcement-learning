@@ -1,7 +1,9 @@
-"""Windy Grid World class"""
+"""Grid World class"""
+import random
 import numpy as np
+import matplotlib.pyplot as plt
 
-
+# Implement windy grid world from the book (Example 6.5)
 class WindyGridWorld(object):
     """Windy Grid World Environment"""
     def __init__(self, height, width, goal_state, wind_vec):
@@ -12,6 +14,14 @@ class WindyGridWorld(object):
         self.action_space = ['LEFT', 'RIGHT', 'UP', 'DOWN']
         self.cur_state = None
         self._random_reset()
+
+    def get_all_states(self):
+        """Return all states."""
+        all_states = []
+        for x_pos in range(self.width):
+            for y_pos in range(self.height):
+                all_states.append((x_pos, y_pos))
+        return all_states
 
     def _random_reset(self):
         x_pos = np.random.randint(self.width+1)
@@ -56,22 +66,17 @@ class WindyGridWorld(object):
         self.cur_state = (x_pos, y_pos)
         reward = -1
         done = (self.cur_state == self.goal_state)
-        return self.cur_state, reward, done, {}
-
+        return self.cur_state, reward, done
 
 class AlwaysXAgent(object):
     """Agent that always takes action X."""
     def __init__(self, action_space, always_action):
         self.action_space = action_space
         self.always_action = always_action
-        self.prev_state = None
-        self.prev_action = None
 
-    def act(self, cur_state):
+    def act(self):
         """Get the action to be taken in the current state"""
-        self.prev_state = cur_state
         action = self.always_action
-        self.prev_action = action
         return action
 
     def update(self, reward):
@@ -79,8 +84,43 @@ class AlwaysXAgent(object):
         pass
 
 
+# Implement Sarsa
+class SarsaAgent(object):
+    """Agent that implements Sarsa"""
+    def __init__(self, state_space, action_space, epsilon, alpha, gamma):
+        self.state_space = state_space
+        self.action_space = action_space
+        self.Q = {}
+        self.epsilon = epsilon
+        self.alpha = alpha
+        self.gamma = gamma
+        for state in self.state_space:
+            self.Q[state] = {}
+            for action in self.action_space:
+                self.Q[state][action] = 0
+
+    def eps_greedy(self, action_q_vals):
+        """Epsilon greedy action selection."""
+        if np.random.rand() < self.epsilon:
+            action = random.choice(action_q_vals.keys())
+        else:
+            action = max(action_q_vals.items(), key=lambda(k, v): v)[0]
+        return action
+
+    def act(self, cur_state):
+        """Get the action to be taken in the current state"""
+        action_q_vals = self.Q[cur_state]
+        action = self.eps_greedy(action_q_vals)
+        return action
+
+    def update(self, S, A, R, S_prime, A_prime):
+        """Using the reward, update Q values"""
+        self.Q[S][A] += self.alpha * (
+            R + self.gamma*(self.Q[S_prime][A_prime]) - self.Q[S][A])
+
+
 def main():
-    """Create grid world and call steps on it."""
+    """Create windy grid world and use SARSA agent on it"""
     height = 7
     width = 10
     goal_state = (7, 3)
@@ -88,19 +128,35 @@ def main():
     grid_world = WindyGridWorld(height, width, goal_state, wind_vec)
 
     start_state = (0, 3)
-    grid_world.state_reset(start_state)
-    always_right_agent = AlwaysXAgent(grid_world.action_space, 'RIGHT')
-    max_steps = 100
-    done = False
-    state = grid_world.cur_state
-    print 0, state
-    for step in range(max_steps):
-        if not done:
-            action = always_right_agent.act(state)
-            state, reward, done, _ = grid_world.step(action)
-            always_right_agent.update(reward)
-            print step+1, state, reward, done
+    # always_right_agent = AlwaysXAgent(grid_world.action_space, 'RIGHT')
+    epsilon, alpha, gamma = 0.1, 0.5, 1
+    sarsa_agent = SarsaAgent(grid_world.get_all_states(),
+                             grid_world.action_space,
+                             epsilon, alpha, gamma)
+
+    max_steps = 8000
+    done = True
+    count = -1
+    counts = []
+    for _ in range(max_steps+1):
+        if done:
+            count += 1
+            done = False
+            grid_world.state_reset(start_state)
+            S = grid_world.cur_state
+            A = sarsa_agent.act(S)
+
+        S_prime, R, done = grid_world.step(A)
+        A_prime = sarsa_agent.act(S_prime)
+        sarsa_agent.update(S, A, R, S_prime, A_prime)
+        S = S_prime
+        A = A_prime
+        counts.append(count)
+
+    plt.plot(counts)
+    plt.show()
 
 
+# Apply Sarsa to windy grid world to reproduce 6.4
 if __name__ == '__main__':
     main()
