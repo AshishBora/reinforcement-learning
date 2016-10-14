@@ -4,13 +4,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-class WindyGridWorld(object):
-    """Windy Grid World Environment"""
-    def __init__(self, height, width, goal_state, wind_vec, move_type):
+class StochasticWindyGridWorld(object):
+    """Stochastic Windy Grid World Environment"""
+    def __init__(self, height, width, goal_state, wind_vec, move_type, stoch_prob):
         self.height = height
         self.width = width
         self.goal_state = goal_state
         self.wind_vec = wind_vec
+        self.stoch_prob = stoch_prob
         if move_type == 'ALL':
             self.action_space = ALL_MOVES
         if move_type == 'KING':
@@ -47,7 +48,10 @@ class WindyGridWorld(object):
 
     def apply_wind(self, x_pos, y_pos):
         """Apply the effect of wind."""
-        y_pos = y_pos + self.wind_vec[x_pos]
+        wind_movement = self.wind_vec[x_pos]
+        p = [self.stoch_prob, 1 - 2*self.stoch_prob, self.stoch_prob]
+        wind_movement += np.random.choice([-1, 0, 1], p=p)
+        y_pos = y_pos + wind_movement
         return (x_pos, y_pos)
 
     def back2grid(self, x_pos, y_pos):
@@ -68,6 +72,7 @@ class WindyGridWorld(object):
         done = (self.cur_state == self.goal_state)
         return self.cur_state, reward, done
 
+
 class AlwaysXAgent(object):
     """Agent that always takes action X."""
     def __init__(self, action_space, always_action):
@@ -84,7 +89,6 @@ class AlwaysXAgent(object):
         pass
 
 
-# Implement Sarsa
 class SarsaAgent(object):
     """Agent that implements Sarsa"""
     def __init__(self, state_space, action_space, epsilon, alpha, gamma):
@@ -119,16 +123,14 @@ class SarsaAgent(object):
             R + self.gamma*(self.Q[S_prime][A_prime]) - self.Q[S][A])
 
 
-def main(move_type):
+def main(move_type, stoch_prob):
     """Create windy grid world and use SARSA agent on it"""
     height = 7
     width = 10
     goal_state = (7, 3)
     wind_vec = [0, 0, 0, 1, 1, 1, 2, 2, 1, 0]
-    grid_world = WindyGridWorld(height, width, goal_state, wind_vec, move_type)
-
+    grid_world = StochasticWindyGridWorld(height, width, goal_state, wind_vec, move_type, stoch_prob)
     start_state = (0, 3)
-    # always_right_agent = AlwaysXAgent(grid_world.action_space, 'RIGHT')
     epsilon, alpha, gamma = 0.1, 0.5, 1
     sarsa_agent = SarsaAgent(grid_world.get_all_states(),
                              grid_world.action_space,
@@ -161,5 +163,6 @@ if __name__ == '__main__':
     ALL_MOVES = ['-1, 1', '0, 1', '1, 1',
                  '-1, 0', '0, 0', '1, 0',
                  '-1,-1', '0,-1', '1,-1']
-    MOVE_TYPE = 'ALL'
-    main(MOVE_TYPE)
+    MOVE_TYPE = 'MANHATTAN'
+    STOCH_PROB = 0.33
+    main(MOVE_TYPE, STOCH_PROB)
