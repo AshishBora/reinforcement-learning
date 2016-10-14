@@ -1,4 +1,3 @@
-"""Grid World class"""
 import random
 import numpy as np
 import matplotlib.pyplot as plt
@@ -49,7 +48,7 @@ class StochasticWindyGridWorld(object):
     def apply_wind(self, x_pos, y_pos):
         """Apply the effect of wind."""
         wind_movement = self.wind_vec[x_pos]
-        p = [self.stoch_prob, 1 - 2*self.stoch_prob, self.stoch_prob]
+        p = [self.stoch_prob/2.0, 1 - self.stoch_prob, self.stoch_prob/2.0]
         wind_movement += np.random.choice([-1, 0, 1], p=p)
         y_pos = y_pos + wind_movement
         return (x_pos, y_pos)
@@ -123,7 +122,49 @@ class SarsaAgent(object):
             R + self.gamma*(self.Q[S_prime][A_prime]) - self.Q[S][A])
 
 
-def main(move_type, stoch_prob):
+def plot_episodes(counts):
+    plt.plot(counts)
+    plt.xlabel('Time steps')
+    plt.ylabel('Episodes')
+
+
+def get_expt1():
+    model1 = {'MOVE_TYPE': 'MANHATTAN', 'STOCH_PROB' : 0.0}
+    model2 = {'MOVE_TYPE': 'KING', 'STOCH_PROB' : 0.0}
+    model3 = {'MOVE_TYPE': 'ALL', 'STOCH_PROB' : 0.0}
+    expt = [model1, model2, model3]
+    for model in expt:
+        model['EPSILON'] = 0.1
+        model['legend'] = model['MOVE_TYPE']
+    return expt
+
+
+def get_expt2():
+    model1 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 0.0, 'EPSILON': 0.1}
+    model2 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 0.0, 'EPSILON': 0.05}
+    model3 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 0.0, 'EPSILON': 0.01}
+    model4 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 0.0, 'EPSILON': 0.001}
+    model5 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 0.0, 'EPSILON': 0.0}
+    expt = [model1, model2, model3, model4, model5]
+    for model in expt:
+        model['legend'] =  model['MOVE_TYPE'] + ', EPSILON = ' + str(model['EPSILON'])
+    return expt
+
+
+def get_expt3():
+    model1 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 1.0, 'EPSILON': 0.001}
+    model2 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 0.5, 'EPSILON': 0.001}
+    model3 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 0.2, 'EPSILON': 0.001}
+    model4 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 0.1, 'EPSILON': 0.001}
+    model5 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 0.05, 'EPSILON': 0.001}
+    model6 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 0.0, 'EPSILON': 0.001}
+    expt = [model1, model2, model3, model4, model5, model6]
+    for model in expt:
+        model['legend'] =  model['MOVE_TYPE'] + ', STOCH_PROB = ' + str(model['STOCH_PROB'])
+    return expt
+
+
+def main(move_type, stoch_prob, epsilon):
     """Create windy grid world and use SARSA agent on it"""
     height = 7
     width = 10
@@ -131,12 +172,11 @@ def main(move_type, stoch_prob):
     wind_vec = [0, 0, 0, 1, 1, 1, 2, 2, 1, 0]
     grid_world = StochasticWindyGridWorld(height, width, goal_state, wind_vec, move_type, stoch_prob)
     start_state = (0, 3)
-    epsilon, alpha, gamma = 0.1, 0.5, 1
+    alpha, gamma = 0.5, 1
     sarsa_agent = SarsaAgent(grid_world.get_all_states(),
                              grid_world.action_space,
                              epsilon, alpha, gamma)
-
-    max_steps = 8000
+    max_steps = 10000
     done = True
     count = -1
     counts = []
@@ -147,22 +187,27 @@ def main(move_type, stoch_prob):
             grid_world.state_reset(start_state)
             S = grid_world.cur_state
             A = sarsa_agent.act(S)
-
         S_prime, R, done = grid_world.step(A)
         A_prime = sarsa_agent.act(S_prime)
         sarsa_agent.update(S, A, R, S_prime, A_prime)
         S = S_prime
         A = A_prime
         counts.append(count)
-
-    plt.plot(counts)
-    plt.show()
+    return counts
 
 
 if __name__ == '__main__':
     ALL_MOVES = ['-1, 1', '0, 1', '1, 1',
                  '-1, 0', '0, 0', '1, 0',
                  '-1,-1', '0,-1', '1,-1']
-    MOVE_TYPE = 'MANHATTAN'
-    STOCH_PROB = 0.33
-    main(MOVE_TYPE, STOCH_PROB)
+    expt = get_expt2()
+    plt.figure(figsize=[10, 7])
+    for model in expt:
+        MOVE_TYPE = model['MOVE_TYPE']
+        STOCH_PROB = model['STOCH_PROB']
+        EPSILON = model['EPSILON']
+        counts = main(MOVE_TYPE, STOCH_PROB, EPSILON)
+        plot_episodes(counts)
+    legends = [model['legend'] for model in expt]
+    plt.legend(legends, loc='upper left')
+    plt.show()
