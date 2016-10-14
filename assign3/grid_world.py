@@ -11,14 +11,12 @@ class WindyGridWorld(object):
         self.width = width
         self.goal_state = goal_state
         self.wind_vec = wind_vec
+        if move_type == 'ALL':
+            self.action_space = ALL_MOVES
         if move_type == 'KING':
-            self.action_space = ['-1, 1', '0, 1', '1, 1',
-                                 '-1, 0',         '1, 0',
-                                 '-1,-1', '0,-1', '1,-1']
+            self.action_space = ALL_MOVES[:4] + ALL_MOVES[5:]
         elif move_type == 'MANHATTAN':
-            self.action_space = [         '0, 1',
-                                 '-1, 0',         '1, 0',
-                                          '0,-1'        ]
+            self.action_space = [ALL_MOVES[i] for i in [1, 3, 5, 7]]
         self.cur_state = None
         self._random_reset()
 
@@ -160,5 +158,8 @@ def main(move_type):
 
 
 if __name__ == '__main__':
-    MOVE_TYPE = 'MANHATTAN'
+    ALL_MOVES = ['-1, 1', '0, 1', '1, 1',
+                 '-1, 0', '0, 0', '1, 0',
+                 '-1,-1', '0,-1', '1,-1']
+    MOVE_TYPE = 'ALL'
     main(MOVE_TYPE)
