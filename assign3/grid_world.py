@@ -3,15 +3,22 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Implement windy grid world from the book (Example 6.5)
+
 class WindyGridWorld(object):
     """Windy Grid World Environment"""
-    def __init__(self, height, width, goal_state, wind_vec):
+    def __init__(self, height, width, goal_state, wind_vec, move_type):
         self.height = height
         self.width = width
         self.goal_state = goal_state
         self.wind_vec = wind_vec
-        self.action_space = ['LEFT', 'RIGHT', 'UP', 'DOWN']
+        if move_type == 'KING':
+            self.action_space = ['-1, 1', '0, 1', '1, 1',
+                                 '-1, 0',         '1, 0',
+                                 '-1,-1', '0,-1', '1,-1']
+        elif move_type == 'MANHATTAN':
+            self.action_space = [         '0, 1',
+                                 '-1, 0',         '1, 0',
+                                          '0,-1'        ]
         self.cur_state = None
         self._random_reset()
 
@@ -35,14 +42,9 @@ class WindyGridWorld(object):
     def move(self, x_pos, y_pos, action):
         """Move accoding to the given action."""
         assert action in self.action_space
-        if action == 'RIGHT':
-            x_pos = x_pos + 1
-        elif action == 'LEFT':
-            x_pos = x_pos - 1
-        elif action == 'UP':
-            y_pos = y_pos + 1
-        elif action == 'DOWN':
-            y_pos = y_pos - 1
+        delta_x, delta_y = map(int, action.split(','))
+        x_pos += delta_x
+        y_pos += delta_y
         return (x_pos, y_pos)
 
     def apply_wind(self, x_pos, y_pos):
@@ -119,13 +121,13 @@ class SarsaAgent(object):
             R + self.gamma*(self.Q[S_prime][A_prime]) - self.Q[S][A])
 
 
-def main():
+def main(move_type):
     """Create windy grid world and use SARSA agent on it"""
     height = 7
     width = 10
     goal_state = (7, 3)
     wind_vec = [0, 0, 0, 1, 1, 1, 2, 2, 1, 0]
-    grid_world = WindyGridWorld(height, width, goal_state, wind_vec)
+    grid_world = WindyGridWorld(height, width, goal_state, wind_vec, move_type)
 
     start_state = (0, 3)
     # always_right_agent = AlwaysXAgent(grid_world.action_space, 'RIGHT')
@@ -157,6 +159,6 @@ def main():
     plt.show()
 
 
-# Apply Sarsa to windy grid world to reproduce 6.4
 if __name__ == '__main__':
-    main()
+    MOVE_TYPE = 'MANHATTAN'
+    main(MOVE_TYPE)
