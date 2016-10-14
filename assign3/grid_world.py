@@ -8,8 +8,6 @@ class GridWorld(object):
         self.height = height
         self.width = width
         self.goal_state = goal_state
-        #         self.wind_loc = wind_loc
-        #         self.wind_speed = wind_speed
         self.action_space = ['LEFT', 'RIGHT', 'UP', 'DOWN']
         self.cur_state = None
         self._reset()
@@ -22,15 +20,19 @@ class GridWorld(object):
     def step(self, action):
         """Perform action in the current state"""
         assert action in self.action_space
+
         x_pos, y_pos = self.cur_state
         if action == 'RIGHT':
-            x_pos = min(self.width-1, self.cur_state[0] + 1)
+            x_pos = x_pos + 1
         elif action == 'LEFT':
-            x_pos = max(0, self.cur_state[0] - 1)
+            x_pos = x_pos - 1
         elif action == 'UP':
-            y_pos = min(self.height-1, self.cur_state[1] + 1)
+            y_pos = y_pos + 1
         elif action == 'DOWN':
-            y_pos = max(0, self.cur_state[1] - 1)
+            y_pos = y_pos - 1
+
+        x_pos = max(0, min(self.width - 1, x_pos))
+        y_pos = max(0, min(self.height - 1, y_pos))
         self.cur_state = (x_pos, y_pos)
         reward = -1
         done = (self.cur_state == self.goal_state)
@@ -55,7 +57,6 @@ class AlwaysXAgent(object):
     def update(self, reward):
         """Update any internal variables using the reward"""
         pass
-
 
 
 def main():
