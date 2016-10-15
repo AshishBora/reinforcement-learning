@@ -129,6 +129,15 @@ def plot_episodes(counts):
 
 
 def get_expt1():
+    model = {'MOVE_TYPE': 'MANHATTAN',
+             'STOCH_PROB' : 0.0,
+             'EPSILON': 0.1,
+             'legend': ''}
+    expt = [model]
+    return expt
+
+
+def get_expt2():
     model1 = {'MOVE_TYPE': 'MANHATTAN', 'STOCH_PROB' : 0.0}
     model2 = {'MOVE_TYPE': 'KING', 'STOCH_PROB' : 0.0}
     model3 = {'MOVE_TYPE': 'ALL', 'STOCH_PROB' : 0.0}
@@ -139,7 +148,7 @@ def get_expt1():
     return expt
 
 
-def get_expt2():
+def get_expt3():
     model1 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 0.0, 'EPSILON': 0.1}
     model2 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 0.0, 'EPSILON': 0.05}
     model3 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 0.0, 'EPSILON': 0.01}
@@ -151,7 +160,7 @@ def get_expt2():
     return expt
 
 
-def get_expt3():
+def get_expt4():
     model1 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 1.0, 'EPSILON': 0.001}
     model2 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 0.5, 'EPSILON': 0.001}
     model3 = {'MOVE_TYPE': 'KING', 'STOCH_PROB': 0.2, 'EPSILON': 0.001}
@@ -200,7 +209,7 @@ if __name__ == '__main__':
     ALL_MOVES = ['-1, 1', '0, 1', '1, 1',
                  '-1, 0', '0, 0', '1, 0',
                  '-1,-1', '0,-1', '1,-1']
-    expt = get_expt2()
+    expt = get_expt4()
     plt.figure(figsize=[10, 7])
     for model in expt:
         MOVE_TYPE = model['MOVE_TYPE']
